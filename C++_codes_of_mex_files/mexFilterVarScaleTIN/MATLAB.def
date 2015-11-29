@@ -1,0 +1,2 @@
+LIBRARY mexFilterVarScaleTIN.mexw32
+EXPORTS mexFunction 

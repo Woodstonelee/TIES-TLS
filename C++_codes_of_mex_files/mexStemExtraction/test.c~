@@ -1,0 +1,11 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+  int i;
+  //  printf("please input:");
+  //  scanf("%d", &i);
+  printf("hello:");
+  printf("%d\n", sizeof(int));
+}
