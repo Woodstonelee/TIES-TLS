@@ -10,10 +10,11 @@ fprintf('ScanPtsFileName to be processed: %s\n', ScanPtsFileName);
 fprintf('InPtsPathName for the following scripts: %s\n', InPtsPathName);
 fprintf('InPtsFileName for the following scripts: %s\n', InPtsFileName);
 
-% fid = fopen(fullfile(InPtsPathName, ScanPtsFileName));
-% data = textscan(fid, '%f %f %f %f %f %f %f %f %f %f %f', 'HeaderLines', 1);
-% fclose(fid);
-data = csvread(fullfile(ScanPtsPathName, ScanPtsFileName), 1, 0);
+fid = fopen(fullfile(ScanPtsPathName, ScanPtsFileName));
+data = textscan(fid, repmat('%f', 1, 19), 'HeaderLines', 3, 'Delimiter', ',');
+fclose(fid);
+data = cell2mat(data);
+% data = csvread(fullfile(ScanPtsPathName, ScanPtsFileName), 1, 0);
 x = data(:, 1);
 y = data(:, 2);
 z = data(:, 3);
