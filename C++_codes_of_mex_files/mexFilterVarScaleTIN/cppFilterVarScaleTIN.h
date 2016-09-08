@@ -20,10 +20,11 @@ using namespace std;
 const unsigned int MAXCHAR = 32767;
 const int BLOCKPSIZE = 4000000;
 
-void cppFilterVarScaleTIN(string InPtsPathName, string InPtsFileName, 
-						  string GroundPtsPathName, string GroundPtsFileName, 
-						  vector<double> scale, vector<double> door, 
-						  vector<double> xlim, vector<double> ylim, 
-						  double &CutH, vector<double> CalCutH, 
-						  string NonGroundPtsPathName, string NonGroundPtsFileName,
-						  string EachScalePathName);
+void cppFilterVarScaleTIN (string InPtsPathName, string InPtsFileName,
+                           string GroundPtsPathName, string GroundPtsFileName,
+                           vector < double >scale, vector < double >door,
+                           vector < double >xlim, vector < double >ylim,
+                           double &CutH, vector < double >CalCutH,
+                           string NonGroundPtsPathName,
+                           string NonGroundPtsFileName,
+                           string EachScalePathName);
