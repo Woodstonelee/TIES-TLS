@@ -105,6 +105,16 @@ void cppFilterVarScaleTIN(string InPtsPathName, string InPtsFileName,
 	double tempx, tempy, tempz;
 	int tempxi, tempyi; //, tempzi;
 	stringstream tempstringstream;
+	
+	// new
+	string GroundPtsIndFileName;
+	GroundPtsIndFileName = GroundPtsPathName + filesep + GroundPtsFileName + ".lnum";
+        // Two files to record the line numbers (in the original input
+        // point clouds) to points in the old and new extracted ground
+        // points.
+        string OldPtsIndFileName, NewPtsIndFileName;
+        OldPtsIndFileName = InPtsPathName + filesep + InPtsFileName + ".lnum";        
+        fstream OldPtsIndFile, NewPtsIndFile;
 
 	for (int si=0; si<(int)scale.size(); si++)
 	{
@@ -115,6 +125,13 @@ void cppFilterVarScaleTIN(string InPtsPathName, string InPtsFileName,
 			strErrMsg = "mexFilterVarScaleTIN, during search lowest point: failed to open the file: \"" + OldPtsFileName + "\".";
 			mexErrMsgTxt(strErrMsg.c_str());
 		}
+
+                OldPtsIndFile.open(OldPtsIndFileName.c_str(), ios_base::in | ios_base::out);
+                if (!OldPtsIndFile) {
+                  strErrMsg.clear();
+                  strErrMsg = "mexFilterVarScaleTIN, during search lowest point: failed to open the file for read and write: \"" + OldPtsIndFileName + "\".";
+                  mexErrMsgTxt(strErrMsg.c_str());
+                }
 
 		// calculate the number of rows and columns
 		xnum = static_cast<int>((xlim[1] - xlim[0]) / scale[si]) + 1;
@@ -189,6 +206,19 @@ void cppFilterVarScaleTIN(string InPtsPathName, string InPtsFileName,
 				GroundGridZ[tempxi][tempyi] = tempz;
 			}
 		}
+
+                if (si==0) {
+                  for (int i=0; i<TotalPtsNum; i++) {
+                    OldPtsIndFile << i+1 << endl;
+                  }
+                  OldPtsIndFile.close();
+                  OldPtsIndFile.open(OldPtsIndFileName.c_str(), ios_base::in | ios_base::out);
+                  if (!OldPtsIndFile) {
+                    strErrMsg.clear();
+                    strErrMsg = "mexFilterVarScaleTIN, during search lowest point: failed to open the file for read and write: \"" + OldPtsIndFileName + "\".";
+                    mexErrMsgTxt(strErrMsg.c_str());
+                  }                  
+                }                
 
 		mxLowestPtsX = mxCreateDoubleMatrix(ValidLPNum, 1, mxREAL);
 		if (mxLowestPtsX==NULL)
@@ -286,9 +316,29 @@ void cppFilterVarScaleTIN(string InPtsPathName, string InPtsFileName,
 		OldPtsFile.clear();
 		OldPtsFile.seekg(0, ios_base::beg);
 
+
+		tempstringstream.clear();
+		tempstringstream<<EachScalePathName<<filesep<<"scale_"<<scale[si]<<"_"<<InPtsFileName<<".lnum";
+		NewPtsIndFileName.clear();
+		getline(tempstringstream, NewPtsIndFileName);
+		if (si == (int)scale.size()-1)
+		{
+			NewPtsIndFileName = GroundPtsPathName + filesep + GroundPtsFileName + ".lnum";
+		}
+
+		NewPtsIndFile.open(NewPtsIndFileName.c_str(), ios_base::out);
+		if (!NewPtsIndFile)
+		{
+			strErrMsg.clear();
+			strErrMsg = "mexFilterVarScaleTIN, failed to open the newly created file: \"" + NewPtsIndFileName + "\".";
+			mexErrMsgTxt(strErrMsg.c_str());
+		}
+                OldPtsIndFile.clear();
+                OldPtsIndFile.seekg(0, ios_base::beg);
+                
 		mxArray *plhspL[1], *prhspL[3], *mxTIN;
 		double *ptrdblQueryPX, *ptrdblQueryPY, *ptrdblQueryPZ, *ptrdblSI, *ptrdblTIN;
-		int SI, TriVertex[3], TriNum;
+		int SI, TriVertex[3], TriNum, LineNum;
 		double planeA, planeB, planeC, planeD, NormalDist;
 		mxTIN = mxGetProperty(plhsTIN[0], 0, "Triangulation");
 		ptrdblTIN = mxGetPr(mxTIN);
@@ -343,6 +393,12 @@ void cppFilterVarScaleTIN(string InPtsPathName, string InPtsFileName,
 			ptrdblSI = mxGetPr(plhspL[0]);
 			for (int j=0; j<BlockSize; j++)
 			{
+                          // get line number of this point
+                          OldPtsIndFile.getline(linestr, MAXCHAR);
+                          linestringstream.clear();
+                          linestringstream.str(linestr);
+                          linestringstream>>LineNum;
+                          
 				if (mxIsNaN(ptrdblSI[j]))
 				{
 					// this point is outside the TIN, not in any triangular.
@@ -378,6 +434,7 @@ void cppFilterVarScaleTIN(string InPtsPathName, string InPtsFileName,
 						if (NormalDist<door[si] && tempz<CutH)
 						{
 							NewPtsFile<<tempx<<"\t"<<tempy<<"\t"<<tempz<<endl;
+                                                        NewPtsIndFile<<LineNum<<endl;
 						}
 						else
 						{
@@ -392,6 +449,7 @@ void cppFilterVarScaleTIN(string InPtsPathName, string InPtsFileName,
 						if (NormalDist<door[si])
 						{
 							NewPtsFile<<tempx<<"\t"<<tempy<<"\t"<<tempz<<endl;
+                                                        NewPtsIndFile<<LineNum<<endl;
 						}
 						else
 						{
@@ -412,6 +470,9 @@ void cppFilterVarScaleTIN(string InPtsPathName, string InPtsFileName,
 
 		OldPtsFile.close();
 		NewPtsFile.close();
+
+                OldPtsIndFile.close();
+                NewPtsIndFile.close();
 
 		// free the memory of the three 2D arrays
 		for (int i=0; i<xnum; i++)
@@ -437,6 +498,7 @@ void cppFilterVarScaleTIN(string InPtsPathName, string InPtsFileName,
 		}
 
 		OldPtsFileName = NewPtsFileName;
+                OldPtsIndFileName = NewPtsIndFileName;
 	}
 
 	if (OutNonGroundPtsFlag)
