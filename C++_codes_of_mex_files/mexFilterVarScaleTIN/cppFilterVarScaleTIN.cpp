@@ -125,15 +125,6 @@ cppFilterVarScaleTIN (string InPtsPathName, string InPtsFileName,
       mexErrMsgTxt (strErrMsg.c_str ());
     }
 
-    OldPtsIndFile.open (OldPtsIndFileName.c_str (),
-                        ios_base::in | ios_base::out);
-    if (!OldPtsIndFile) {
-      strErrMsg.clear ();
-      strErrMsg =
-        "mexFilterVarScaleTIN, during search lowest point: failed to open the file for read and write: \""
-        + OldPtsIndFileName + "\".";
-      mexErrMsgTxt (strErrMsg.c_str ());
-    }
     // calculate the number of rows and columns
     xnum = static_cast < int >((xlim[1] - xlim[0]) / scale[si]) + 1;
     ynum = static_cast < int >((ylim[1] - ylim[0]) / scale[si]) + 1;
@@ -200,21 +191,38 @@ cppFilterVarScaleTIN (string InPtsPathName, string InPtsFileName,
     }
 
     if (si == 0) {
-      for (int i = 0; i < TotalPtsNum; i++) {
-        OldPtsIndFile << i + 1 << endl;
-      }
-      OldPtsIndFile.close ();
       OldPtsIndFile.open (OldPtsIndFileName.c_str (),
-                          ios_base::in | ios_base::out);
+                          ios_base::in);
       if (!OldPtsIndFile) {
-        strErrMsg.clear ();
-        strErrMsg =
-          "mexFilterVarScaleTIN, during search lowest point: failed to open the file for read and write: \""
-          + OldPtsIndFileName + "\".";
-        mexErrMsgTxt (strErrMsg.c_str ());
+        OldPtsIndFile.open (OldPtsIndFileName.c_str (),
+                            ios_base::out);
+        if (!OldPtsIndFile) {
+          strErrMsg.clear ();
+          strErrMsg =
+            "mexFilterVarScaleTIN, during search lowest point: failed to open the file for write: \""
+            + OldPtsIndFileName + "\".";
+          mexErrMsgTxt (strErrMsg.c_str ());
+        }
+
+        for (int i = 0; i < TotalPtsNum; i++) {
+          OldPtsIndFile << i + 1 << endl;
+        }
+        OldPtsIndFile.close ();        
+      } else {
+        mexPrintf("mexFilterVarScaleTIN, found existing file of line numbers for the input point cloud: %s.\n", OldPtsIndFileName.c_str());
+        OldPtsIndFile.close();
       }
     }
-
+    OldPtsIndFile.open (OldPtsIndFileName.c_str (),
+                        ios_base::in);
+    if (!OldPtsIndFile) {
+      strErrMsg.clear ();
+      strErrMsg =
+        "mexFilterVarScaleTIN, during search lowest point: failed to open the file for read: \""
+        + OldPtsIndFileName + "\".";
+      mexErrMsgTxt (strErrMsg.c_str ());
+    }
+    
     mxLowestPtsX = mxCreateDoubleMatrix (ValidLPNum, 1, mxREAL);
     if (mxLowestPtsX == NULL) {
       mexErrMsgTxt ("mexFilterVarScaleTIN: No enough memory!");
@@ -497,7 +505,13 @@ cppFilterVarScaleTIN (string InPtsPathName, string InPtsFileName,
     mxDestroyArray (plhsTIN[0]);
 
     if ((!OutEachScaleFlag) && (si > 0)) {
-      if (!remove (OldPtsFileName.c_str ())) {
+      if (remove (OldPtsFileName.c_str ()) != 0) {
+        mexErrMsgTxt 
+          ("mexFilterVarScaleTIN: Failed to remove the old file of ground points from the last scale");
+      }
+      if (remove (OldPtsIndFileName.c_str ()) != 0) {
+        mexErrMsgTxt 
+          ("mexFilterVarScaleTIN: Failed to remove the old file of ground point indices from the last scale");
       }
     }
 

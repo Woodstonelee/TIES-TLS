@@ -42,6 +42,7 @@ NewCutH = mexFilterVarScaleTIN(InPtsPathName, InPtsFileName, ...
 clear functions;
 
 if RefineGround
+    fprintf('Refine ground points by fitting a plane\n');
     % add a procedure to remove some false ground points in the area far from
     % the scan position.
     gpfid=fopen(fullfile(GroundPtsPathName, GroundPtsFileName), 'r');
@@ -56,12 +57,20 @@ if RefineGround
     datax=reshape(datax, ndata,1);
     datay=reshape(datay, ndata,1);
     dataz=reshape(dataz, ndata,1);
-    [newx, newy, newz] = Fcn_RefineGroundPoints(datax, datay, dataz, MaxRange, deltaz);
+    [newx, newy, newz, newind] = Fcn_RefineGroundPoints(datax, datay, dataz, MaxRange, deltaz);
     newgpfid=fopen(fullfile(GroundPtsPathName, GroundPtsFileName), 'w');
-    % fprintf(newgpfid, 'x,y,z\r\n');
-    fprintf(newgpfid, '%.3f %.3f %.3f\r\n', ([newx, newy, newz])');
+    % fprintf(newgpfid, 'x,y,z\n');
+    fprintf(newgpfid, '%.3f %.3f %.3f\n', ([newx, newy, newz])');
     fclose(newgpfid);
     % end of this refinement of ground points
+
+    fid = fopen(fullfile(GroundPtsPathName, [GroundPtsFileName, '.lnum']));
+    line_num = textscan(fid, '%d');
+    fclose(fid);
+    line_num = cell2mat(line_num);
+    fid = fopen(fullfile(GroundPtsPathName, [GroundPtsFileName, '.lnum']), 'w');
+    fprintf(fid, '%d\n', line_num(newind));
+    fclose(fid);
 end
 
 % % delete the InPtsFile, the input point clouds file that is simply
@@ -74,4 +83,4 @@ fprintf('XoY bounding box: \nminx\tmaxx\tminy\tmaxy\n%.3f\t%.3f\t%.3f\t%.3f\n', 
 
 fprintf('Script2_FilteringVarTIN finished!\n');
 
-clear datax datay dataz newx newy newz;
+% clear datax datay dataz newx newy newz;

@@ -22,12 +22,15 @@ num_returns = data(:, 7);
 % class = data(:, 24);
 clear data;
 
+line_num = (1:length(x))';
+
 % remove zero-hit points
 tmpflag = num_returns > 0;
 x = x(tmpflag);
 y = y(tmpflag);
 z = z(tmpflag);
 % class = class(tmpflag);
+line_num = line_num(tmpflag);
 
 % use only woody points
 % tmpflag = class == 1;
@@ -35,9 +38,15 @@ z = z(tmpflag);
 % y = y(tmpflag);
 % z = z(tmpflag);
 % class = class(tmpflag);
+% line_num = line_num(tmpflag);
 
 fid = fopen(fullfile(InPtsPathName, InPtsFileName), 'w');
 fprintf(fid, '%f\t%f\t%f\n', ([x, y, z])');
+fclose(fid);
+
+% output the line number of points in the original input point cloud.
+fid = fopen(fullfile(InPtsPathName, [InPtsFileName, '.lnum']), 'w');
+fprintf(fid, '%d\n', line_num);
 fclose(fid);
 
 fprintf('Script1_CvtPtsFmt finished!\n');

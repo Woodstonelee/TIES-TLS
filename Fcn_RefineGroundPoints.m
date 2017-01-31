@@ -1,4 +1,4 @@
-function [newx, newy, newz] = Fcn_RefineGroundPoints(x, y, z, MaxRange, deltaz)
+function [newx, newy, newz, newind] = Fcn_RefineGroundPoints(x, y, z, MaxRange, deltaz)
     selectflag = (x.^2 + y.^2) < MaxRange^2 * ones(size(x));
     [A, B, C] = FitPlane( x(selectflag), y(selectflag), z(selectflag));
     newptsflag = z < (A*x + B*y + C*ones(size(x)) + deltaz*ones(size(x)));
@@ -6,6 +6,7 @@ function [newx, newy, newz] = Fcn_RefineGroundPoints(x, y, z, MaxRange, deltaz)
     newx = x(newptsflag);
     newy = y(newptsflag);
     newz = z(newptsflag);
+    newind = find(newptsflag);
 end
 
 function [A, B, C] = FitPlane(x, y, z)
